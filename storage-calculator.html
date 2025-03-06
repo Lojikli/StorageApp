@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Storage Space Calculator</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/10.0.0/math.min.js"></script>
+    <style>
+        /* Custom styles */
+        .gradient-bg {
+            background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%);
+        }
+        
+        .card {
+            backdrop-filter: blur(16px) saturate(180%);
+            background-color: rgba(255, 255, 255, 0.75);
+            border-radius: 12px;
+            border: 1px solid rgba(209, 213, 219, 0.3);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(59, 130, 246, 0.3);
+        }
+
+        #visualization-container {
+            height: 400px;
+            background-color: rgba(243, 244, 246, 0.7);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .range-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #4f46e5;
+            cursor: pointer;
+        }
+
+        .shimmer {
+            background: linear-gradient(90deg, 
+                        rgba(255,255,255,0) 0%, 
+                        rgba(255,255,255,0.8) 50%, 
+                        rgba(255,255,255,0) 100%);
+            background-size: 200% 100%;
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% {background-position: -200% 0;}
+            100% {background-position: 200% 0;}
+        }
+        
+        .storage-unit-visual {
+            border: 2px dashed #4f46e5;
+            position: relative;
+        }
+        
+        .item-box {
+            position: absolute;
+            background-color: rgba(79, 70, 229, 0.2);
+            border: 1px solid rgba(79, 70, 229, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #4f46e5;
+            font-size: 10px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gray-50">
+    <!-- Header -->
+    <header class="gradient-bg text-white py-6 shadow-lg">
+        <div class="container mx-auto px-4">
+            <div class="flex justify-between items-center">
+                <h1 class="text-2xl md:text-3xl font-bold">Storage Space Calculator</h1>
+                <div>
+                    <button id="showIntroBtn" class="px-3 py-2 rounded-md bg-white bg-opacity-20 text-sm font-medium">
+                        How It Works
+                    </button>
+                </div>
+            </div>
+            <p class="mt-2 opacity-90">Calculate the perfect storage unit or moving truck size for your needs</p>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8">
+        <!-- Introduction Modal -->
+        <div id="introModal" class="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50" style="display: flex;">
+            <div class="bg-white rounded-lg max-w-md mx-4 p-6 shadow-xl">
+                <h2 class="text-xl font-bold text-gray-800 mb-4">Welcome to Storage Space Calculator</h2>
+                <p class="text-gray-600 mb-4">This tool helps you determine exactly how much storage space you need:</p>
+                <ol class="list-decimal pl-5 mb-4 text-gray-600 space-y-2">
+                    <li>Add your furniture and household items</li>
+                    <li>Enter dimensions for each item</li>
+                    <li>See the total volume needed</li>
+                    <li>Get recommendations for storage unit or truck size</li>
+                    <li>Visualize how your items might fit in the space</li>
+                </ol>
+                <p class="text-gray-600 mb-6">You can add common household items from our catalog or create custom items.</p>
+                <div class="flex justify-end">
+                    <button id="closeIntroBtn" class="btn-primary text-white px-4 py-2 rounded-md font-medium">
+                        Get Started
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <!-- Left Column - Item Management -->
+            <div class="lg:col-span-7">
+                <div class="card p-6 mb-8">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4">Your Items</h2>
+                    
+                    <!-- Quick Add Section -->
+                    <div class="mb-6">
+                        <div class="flex justify-between items-center mb-3">
+                            <h3 class="text-md font-medium text-gray-700">Quick Add Common Items</h3>
+                            <button id="toggleCatalogBtn" class="text-sm text-indigo-600 hover:text-indigo-800">
+                                Browse Catalog
+                            </button>
+                        </div>
+                        
+                        <!-- Catalog Items -->
+                        <div id="catalogContainer" class="hidden">
+                            <div class="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4" id="catalogItems">
+                                <!-- Catalog items will be inserted here -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Custom Item Form -->
+                    <div class="mb-6 border-t border-gray-100 pt-5">
+                        <h3 class="text-md font-medium text-gray-700 mb-3">Add Custom Item</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Item Name</label>
+                                <input type="text" id="itemName" 
+                                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                      placeholder="e.g., Coffee Table">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Quantity</label>
+                                <input type="number" id="itemQuantity" min="1" value="1"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Width (inches)</label>
+                                <input type="number" id="itemWidth" min="1" value="0"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Depth (inches)</label>
+                                <input type="number" id="itemDepth" min="1" value="0"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Height (inches)</label>
+                                <input type="number" id="itemHeight" min="1" value="0"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            </div>
+                        </div>
+                        
+                        <div class="text-right">
+                            <button id="addItemBtn" 
+                                    class="btn-primary text-white px-4 py-2 rounded-md text-sm font-medium opacity-50 cursor-not-allowed">
+                                Add Item
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Items List -->
+                    <div>
+                        <h3 class="text-md font-medium text-gray-700 mb-3">Your Item List</h3>
+                        
+                        <div id="emptyItemsList" class="text-center py-8 text-gray-500">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto mb-3 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                            </svg>
+                            <p>No items added yet. Add some items to get started.</p>
+                        </div>
+                        
+                        <div id="itemsListContainer" class="hidden border border-gray-200 rounded-md overflow-hidden">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Item</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dimensions</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Qty</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vol (cu ft)</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="itemsList" class="bg-white divide-y divide-gray-200">
+                                    <!-- Items will be inserted here -->
+                                </tbody>
+                                <tfoot class="bg-gray-50">
+                                    <tr>
+                                        <td colspan="3" class="px-4 py-3 text-sm font-medium text-gray-900">Total Volume</td>
+                                        <td colspan="2" class="px-4 py-3 text-sm font-bold text-indigo-700" id="totalVolumeDisplay">0.0 cu ft</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Right Column - Results & Visualization -->
+            <div class="lg:col-span-5">
+                <div class="card p-6 mb-8 sticky top-6">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4">Storage Recommendation</h2>
+                    
+                    <!-- Packing Efficiency Slider -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Packing Efficiency</label>
+                        <div class="flex items-center">
+                            <span class="text-xs text-gray-500 mr-2">Loose</span>
+                            <input type="range" id="packingEfficiency" min="50" max="85" step="5" value="70"
+                                  class="range-slider flex-grow h-2 bg-gray-200 rounded appearance-none">
+                            <span class="text-xs text-gray-500 ml-2">Tight</span>
+                            <span class="ml-3 text-sm font-medium text-gray-700" id="efficiencyDisplay">70%</span>
+                        </div>
+                        <p class="mt-1 text-xs text-gray-500">Higher efficiency means more tightly packed items (professional movers can achieve 70-85%).</p>
+                    </div>
+                    
+                    <!-- Results -->
+                    <div id="resultsContainer" class="hidden mb-6 bg-indigo-50 p-4 rounded-lg">
+                        <div class="flex justify-between items-center mb-3">
+                            <h3 class="text-md font-medium text-gray-700">Your Results</h3>
+                            <span class="text-xs text-gray-500" id="efficiencyResultDisplay">With 70% packing efficiency</span>
+                        </div>
+                        
+                        <div class="space-y-3">
+                            <div class="flex justify-between">
+                                <span class="text-sm text-gray-600">Total Item Volume:</span>
+                                <span class="text-sm font-medium" id="totalVolumeResult">0.0 cubic feet</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-sm text-gray-600">Required Space:</span>
+                                <span class="text-sm font-medium" id="adjustedVolumeResult">0.0 cubic feet</span>
+                            </div>
+                            <div class="border-t border-indigo-100 pt-3">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm font-medium text-gray-700">Recommended Storage Unit:</span>
+                                    <span class="text-sm font-bold text-indigo-700" id="recommendedStorageUnit">5' × 5'</span>
+                                </div>
+                                <div class="flex justify-between items-center text-xs text-gray-500 mt-1">
+                                    <span id="storageDimensions">5' × 5' × 8'</span>
+                                    <span id="storageVolume">200 cubic feet</span>
+                                </div>
+                            </div>
+                            <div class="border-t border-indigo-100 pt-3">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm font-medium text-gray-700">Recommended Moving Truck:</span>
+                                    <span class="text-sm font-bold text-indigo-700" id="recommendedTruck">Cargo Van</span>
+                                </div>
+                                <div class="text-xs text-gray-500 mt-1" id="truckDescription">Good for studio or small 1-bedroom apartment (up to 400 cubic feet)</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Placeholder for empty state -->
+                    <div id="emptyResults" class="mb-6 bg-gray-50 p-8 rounded-lg text-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto mb-3 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
+                        </svg>
+                        <p class="text-gray-500 mb-2">Add some items to see storage recommendations</p>
+                        <div class="shimmer w-48 h-2 bg-gray-200 rounded-full mx-auto"></div>
+                    </div>
+                    
+                    <!-- 2D Visualization (more reliable than 3D) -->
+                    <div id="visualization-container" class="relative">
+                        <h3 class="absolute top-3 left-3 text-sm font-medium text-gray-700 bg-white bg-opacity-70 px-2 py-1 rounded">Storage Unit Visualization</h3>
+                        <div id="visualization" class="w-full h-full flex items-center justify-center">
+                            <div class="storage-unit-visual bg-white" style="width: 200px; height: 200px; margin: 20px;">
+                                <!-- Items will be visualized here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-6">
+        <div class="container mx-auto px-4">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="mb-4 md:mb-0">
+                    <h2 class="text-xl font-bold">Storage Space Calculator</h2>
+                    <p class="text-gray-400 text-sm mt-1">Calculate the perfect storage solution for your needs</p>
+                </div>
+                <div class="flex space-x-6">
+                    <a href="#" class="text-gray-300 hover:text-white">About</a>
+                    <a href="#" class="text-gray-300 hover:text-white">Privacy Policy</a>
+                    <a href="#" class="text-gray-300 hover:text-white">Contact</a>
+                </div>
+            </div>
+            <div class="text-center mt-6 text-gray-400 text-sm">
+                &copy; 2025 Storage Space Calculator. All rights reserved.
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Data models
+        const catalogItems = [
+            { name: "King Bed", width: 76, depth: 80, height: 25 },
+            { name: "Queen Bed", width: 60, depth: 80, height: 25 },
+            { name: "Full Bed", width: 54, depth: 75, height: 25 },
+            { name: "Twin Bed", width: 38, depth: 75, height: 25 },
+            { name: "Sofa (3-seater)", width: 84, depth: 38, height: 36 },
+            { name: "Loveseat", width: 58, depth: 38, height: 36 },
+            { name: "Armchair", width: 35, depth: 38, height: 35 },
+            { name: "Coffee Table", width: 40, depth: 24, height: 18 },
+            { name: "Dining Table", width: 72, depth: 36, height: 30 },
+            { name: "Dining Chair", width: 20, depth: 20, height: 36 },
+            { name: "Dresser", width: 60, depth: 20, height: 35 },
+            { name: "Bookshelf", width: 36, depth: 12, height: 72 },
+            { name: "Desk", width: 48, depth: 24, height: 30 },
+            { name: "Refrigerator", width: 36, depth: 32, height: 70 },
+            { name: "Washing Machine", width: 27, depth: 27, height: 36 },
+            { name: "Dishwasher", width: 24, depth: 25, height: 35 },
+            { name: "Microwave", width: 24, depth: 16, height: 14 },
+            { name: "TV (65\")", width: 57, depth: 4, height: 33 },
+            { name: "TV Stand", width: 60, depth: 18, height: 24 },
+            { name: "Wardrobe Box", width: 24, depth: 20, height: 48 },
+            { name: "Large Box", width: 18, depth: 18, height: 18 },
+            { name: "Medium Box", width: 18, depth: 14, height: 12 },
+            { name: "Small Box", width: 16, depth: 12, height: 10 },
+            { name: "Bicycle", width: 68, depth: 20, height: 40 }
+        ];
+        
+        const storageUnits = [
+            { name: "5' × 5'", width: 5, depth: 5, height: 8, volume: 200 },
+            { name: "5' × 10'", width: 5, depth: 10, height: 8, volume: 400 },
+            { name: "10' × 10'", width: 10, depth: 10, height: 8, volume: 800 },
+            { name: "10' × 15'", width: 10, depth: 15, height: 8, volume: 1200 },
+            { name: "10' × 20'", width: 10, depth: 20, height: 8, volume: 1600 },
+            { name: "10' × 30'", width: 10, depth: 30, height: 8, volume: 2400 }
+        ];
+        
+        const movingTrucks = [
+            { name: "Cargo Van", volume: 400, description: "Good for studio or small 1-bedroom apartment (up to 400 cubic feet)" },
+            { name: "10' Truck", volume: 400, description: "Studio to 1-bedroom apartment (up to 400 cubic feet)" },
+            { name: "15' Truck", volume: 800, description: "1-2 bedroom apartment (up to 800 cubic feet)" },
+            { name: "20' Truck", volume: 1100, description: "2-3 bedroom house (up to 1,100 cubic feet)" },
+            { name: "26' Truck", volume: 1700, description: "3-5 bedroom house (up to 1,700 cubic feet)" }
+        ];
+        
+        // App state
+        let userItems = [];
+        let packingEfficiency = 70;
+        
+        // DOM elements
+        const introModal = document.getElementById('introModal');
+        const showIntroBtn = document.getElementById('showIntroBtn');
+        const closeIntroBtn = document.getElementById('closeIntroBtn');
+        const toggleCatalogBtn = document.getElementById('toggleCatalogBtn');
+        const catalogContainer = document.getElementById('catalogContainer');
+        const catalogItemsContainer = document.getElementById('catalogItems');
+        const itemNameInput = document.getElementById('itemName');
+        const itemQuantityInput = document.getElementById('itemQuantity');
+        const itemWidthInput = document.getElementById('itemWidth');
+        const itemDepthInput = document.getElementById('itemDepth');
+        const itemHeightInput = document.getElementById('itemHeight');
+        const addItemBtn = document.getElementById('addItemBtn');
+        const itemsList = document.getElementById('itemsList');
+        const emptyItemsList = document.getElementById('emptyItemsList');
+        const itemsListContainer = document.getElementById('itemsListContainer');
+        const totalVolumeDisplay = document.getElementById('totalVolumeDisplay');
+        const packingEfficiencySlider = document.getElementById('packingEfficiency');
+        const efficiencyDisplay = document.getElementById('efficiencyDisplay');
+        const resultsContainer = document.getElementById('resultsContainer');
+        const emptyResults = document.getElementById('emptyResults');
+        const totalVolumeResult = document.getElementById('totalVolumeResult');
+        const adjustedVolumeResult = document.getElementById('adjustedVolumeResult');
+        const recommendedStorageUnit = document.getElementById('recommendedStorageUnit');
+        const storageDimensions = document.getElementById('storageDimensions');
+        const storageVolume = document.getElementById('storageVolume');
+        const recommendedTruck = document.getElementById('recommendedTruck');
+        const truckDescription = document.getElementById('truckDescription');
+        const efficiencyResultDisplay = document.getElementById('efficiencyResultDisplay');
+        const visualizationContainer = document.getElementById('visualization-container');
+        const visualization = document.getElementById('visualization');
+        
+        // Initialize the app
+        function init() {
+            // Populate catalog items
+            populateCatalogItems();
+            
+            // Set up event listeners
+            showIntroBtn.addEventListener('click', showIntro);
+            closeIntroBtn.addEventListener('click', hideIntro);
+            toggleCatalogBtn.addEventListener('click', toggleCatalog);
+            addItemBtn.addEventListener('click', addCustomItem);
+            packingEfficiencySlider.addEventListener('input', updateEfficiency);
+            
+            // Add input validation
+            itemNameInput.addEventListener('input', validateItemForm);
+            itemWidthInput.addEventListener('input', validateItemForm);
+            itemDepthInput.addEventListener('input', validateItemForm);
+            itemHeightInput.addEventListener('input', validateItemForm);
+            itemQuantityInput.addEventListener('input', validateItemForm);
+        }
+        
+        // UI functions
+        function showIntro() {
+            introModal.style.display = 'flex';
+        }
+        
+        function hideIntro() {
+            introModal.style.display = 'none';
+        }
+        
+        function toggleCatalog() {
+            if (catalogContainer.classList.contains('hidden')) {
+                catalogContainer.classList.remove('hidden');
+                toggleCatalogBtn.textContent = 'Hide Catalog';
+            } else {
+                catalogContainer.classList.add('hidden');
+                toggleCatalogBtn.textContent = 'Browse Catalog';
+            }
+        }
+        
+        function populateCatalogItems() {
+            catalogItemsContainer.innerHTML = '';
+            
+            catalogItems.forEach(item => {
+                const button = document.createElement('button');
+                button.className = 'border border-gray-200 rounded-md p-3 text-sm text-left hover:bg-indigo-50 hover:border-indigo-200 transition';
+                button.innerHTML = `
+                    <span class="block font-medium text-gray-800">${item.name}</span>
+                    <span class="text-xs text-gray-500">${item.width}" × ${item.depth}" × ${item.height}"</span>
+                `;
+                
+                button.addEventListener('click', () => addCatalogItem(item));
+                
+                catalogItemsContainer.appendChild(button);
+            });
+        }
+        
+        function validateItemForm() {
+            const name = itemNameInput.value.trim();
+            const width = parseFloat(itemWidthInput.value);
+            const depth = parseFloat(itemDepthInput.value);
+            const height = parseFloat(itemHeightInput.value);
+            const quantity = parseInt(itemQuantityInput.value);
+            
+            const isValid = name !== '' && 
+                         !isNaN(width) && width > 0 && 
+                         !isNaN(depth) && depth > 0 && 
+                         !isNaN(height) && height > 0 &&
+                         !isNaN(quantity) && quantity > 0;
+            
+            if (isValid) {
+                addItemBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            } else {
+                addItemBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            }
+            
+            return isValid;
+        }
+        
+        // Item management
+        function addCatalogItem(item) {
+            userItems.push({
+                name: item.name,
+                width: item.width,
+                depth: item.depth,
+                height: item.height,
+                quantity: 1
+            });
+            
+            updateItemsList();
+            updateResults();
+        }
+        
+        function addCustomItem() {
+            if (!validateItemForm()) return;
+            
+            userItems.push({
+                name: itemNameInput.value.trim(),
+                width: parseFloat(itemWidthInput.value),
+                depth: parseFloat(itemDepthInput.value),
+                height: parseFloat(itemHeightInput.value),
+                quantity: parseInt(itemQuantityInput.value)
+            });
+            
+            // Reset the form
+            itemNameInput.value = '';
+            itemWidthInput.value = '0';
+            itemDepthInput.value = '0';
+            itemHeightInput.value = '0';
+            itemQuantityInput.value = '1';
+            
+            validateItemForm();
+            updateItemsList();
+            updateResults();
+        }
+        
+        function removeItem(index) {
+            userItems.splice(index, 1);
+            updateItemsList();
+            updateResults();
+        }
+        
+        function updateItemsList() {
+            if (userItems.length === 0) {
+                emptyItemsList.style.display = 'block';
+                itemsListContainer.classList.add('hidden');
+                return;
+            }
+            
+            emptyItemsList.style.display = 'none';
+            itemsListContainer.classList.remove('hidden');
+            
+            itemsList.innerHTML = '';
+            
+            userItems.forEach((item, index) => {
+                const volume = calculateItemVolume(item);
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">${item.name}</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">${item.width}" × ${item.depth}" × ${item.height}"</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">${item.quantity}</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">${volume.toFixed(1)}</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-right text-sm font-medium">
+                        <button class="text-red-600 hover:text-red-900">Remove</button>
+                    </td>
+                `;
+                
+                const removeButton = row.querySelector('button');
+                removeButton.addEventListener('click', () => removeItem(index));
+                
+                itemsList.appendChild(row);
+            });
+            
+            const totalVolume = calculateTotalVolume();
+            totalVolumeDisplay.textContent = `${totalVolume.toFixed(1)} cu ft`;
+        }
+        
+        // Calculation functions
+        function calculateItemVolume(item) {
+            const volumeInCubicInches = item.width * item.depth * item.height;
+            const volumeInCubicFeet = volumeInCubicInches / 1728; // Convert to cubic feet
+            return volumeInCubicFeet * item.quantity;
+        }
+        
+        function calculateTotalVolume() {
+            return userItems.reduce((total, item) => {
+                return total + calculateItemVolume(item);
+            }, 0);
+        }
+        
+        function calculateAdjustedVolume() {
+            return (calculateTotalVolume() * 100) / packingEfficiency;
+        }
+        
+        function getRecommendedStorageUnit() {
+            const adjustedVolume = calculateAdjustedVolume();
+            
+            for (const unit of storageUnits) {
+                if (unit.volume >= adjustedVolume) {
+                    return unit;
+                }
+            }
+            
+            return storageUnits[storageUnits.length - 1];
+        }
+        
+        function getRecommendedTruck() {
+            const adjustedVolume = calculateAdjustedVolume();
+            
+            for (const truck of movingTrucks) {
+                if (truck.volume >= adjustedVolume) {
+                    return truck;
+                }
+            }
+            
+            return movingTrucks[movingTrucks.length - 1];
+        }
+        
+        // UI updates
+        function updateEfficiency() {
+            packingEfficiency = parseInt(packingEfficiencySlider.value);
+            efficiencyDisplay.textContent = `${packingEfficiency}%`;
+            
+            if (userItems.length > 0) {
+                updateResults();
+            }
+        }
+        
+        function updateResults() {
+            if (userItems.length === 0) {
+                resultsContainer.classList.add('hidden');
+                emptyResults.style.display = 'block';
+                return;
+            }
+            
+            resultsContainer.classList.remove('hidden');
+            emptyResults.style.display = 'none';
+            
+            const totalVolume = calculateTotalVolume();
+            const adjustedVolume = calculateAdjustedVolume();
+            const recommendedUnit = getRecommendedStorageUnit();
+            const recommendedTruckObj = getRecommendedTruck();
+            
+            totalVolumeResult.textContent = `${totalVolume.toFixed(1)} cubic feet`;
+            adjustedVolumeResult.textContent = `${adjustedVolume.toFixed(1)} cubic feet`;
+            recommendedStorageUnit.textContent = recommendedUnit.name;
+            storageDimensions.textContent = `${recommendedUnit.width}' × ${recommendedUnit.depth}' × ${recommendedUnit.height}'`;
+            storageVolume.textContent = `${recommendedUnit.volume} cubic feet`;
+            recommendedTruck.textContent = recommendedTruckObj.name;
+            truckDescription.textContent = recommendedTruckObj.description;
+            efficiencyResultDisplay.textContent = `With ${packingEfficiency}% packing efficiency`;
+            
+            updateVisualization(recommendedUnit);
+        }
+        
+        function updateVisualization(unit) {
+            const visualizationDiv = visualization.querySelector('.storage-unit-visual');
+            visualizationDiv.innerHTML = '';
+            
+            // Set the visualization size proportional to the unit dimensions
+            const maxSize = 300;
+            const aspectRatio = unit.depth / unit.width;
+            let width, height;
+            
+            if (aspectRatio > 1) {
+                // Deeper than wide
+                height = maxSize;
+                width = maxSize / aspectRatio;
+            } else {
+                // Wider than deep
+                width = maxSize;
+                height = maxSize * aspectRatio;
+            }
+            
+            visualizationDiv.style.width = `${width}px`;
+            visualizationDiv.style.height = `${height}px`;
+            
+            // Add unit dimensions label
+            const dimensionsLabel = document.createElement('div');
+            dimensionsLabel.className = 'absolute bottom-2 right-2 text-xs text-gray-500 bg-white bg-opacity-70 px-1 rounded';
+            dimensionsLabel.textContent = `${unit.width}' × ${unit.depth}'`;
+            visualizationDiv.appendChild(dimensionsLabel);
+            
+            // Simple box packing visualization
+            if (userItems.length === 0) return;
+            
+            // Sort items by area (largest first)
+            const sortedItems = [...userItems].sort((a, b) => {
+                const areaA = (a.width / 12) * (a.depth / 12);
+                const areaB = (b.width / 12) * (b.depth / 12);
+                return areaB - areaA;
+            });
+            
+            // Simple rectangle packing algorithm
+            // This is a very basic approach - a real app would use a more sophisticated bin packing algorithm
+            const scaleFactor = width / unit.width; // pixels per foot
+            
+            // Keep track of placed items to avoid overlap (very simple approach)
+            const placedRectangles = [];
+            
+            for (const item of sortedItems) {
+                for (let q = 0; q < item.quantity; q++) {
+                    const itemWidthFt = item.width / 12;
+                    const itemDepthFt = item.depth / 12;
+                    const itemWidthPx = itemWidthFt * scaleFactor;
+                    const itemDepthPx = itemDepthFt * scaleFactor;
+                    
+                    // Find a position for this item (very simple algorithm)
+                    let placed = false;
+                    const stepSize = 10; // pixels
+                    
+                    // Try to place the item at different positions
+                    for (let y = 0; y <= height - itemDepthPx && !placed; y += stepSize) {
+                        for (let x = 0; x <= width - itemWidthPx && !placed; x += stepSize) {
+                            // Check if this position overlaps with any placed rectangle
+                            let overlaps = false;
+                            
+                            for (const rect of placedRectangles) {
+                                if (
+                                    x < rect.x + rect.width &&
+                                    x + itemWidthPx > rect.x &&
+                                    y < rect.y + rect.height &&
+                                    y + itemDepthPx > rect.y
+                                ) {
+                                    overlaps = true;
+                                    break;
+                                }
+                            }
+                            
+                            if (!overlaps) {
+                                // Place the item here
+                                const itemBox = document.createElement('div');
+                                itemBox.className = 'item-box';
+                                itemBox.style.width = `${itemWidthPx}px`;
+                                itemBox.style.height = `${itemDepthPx}px`;
+                                itemBox.style.left = `${x}px`;
+                                itemBox.style.top = `${y}px`;
+                                
+                                // Generate a color based on the item name
+                                const hash = item.name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+                                const hue = hash % 360;
+                                itemBox.style.backgroundColor = `hsla(${hue}, 70%, 60%, 0.3)`;
+                                itemBox.style.borderColor = `hsla(${hue}, 70%, 40%, 0.5)`;
+                                
+                                // Add item name if it fits
+                                if (itemWidthPx > 40 && itemDepthPx > 20) {
+                                    itemBox.textContent = item.name;
+                                }
+                                
+                                visualizationDiv.appendChild(itemBox);
+                                
+                                // Remember this rectangle
+                                placedRectangles.push({
+                                    x: x,
+                                    y: y,
+                                    width: itemWidthPx,
+                                    height: itemDepthPx
+                                });
+                                
+                                placed = true;
+                            }
+                        }
+                    }
+                    
+                    // If we couldn't place the item, just skip it (in a real app, you'd handle this better)
+                    if (!placed && placedRectangles.length < 30) { // Limit for performance
+                        // Add a small random box to represent this item
+                        const itemBox = document.createElement('div');
+                        itemBox.className = 'item-box';
+                        
+                        const size = Math.min(30, Math.max(10, Math.sqrt(itemWidthPx * itemDepthPx) / 2));
+                        itemBox.style.width = `${size}px`;
+                        itemBox.style.height = `${size}px`;
+                        
+                        // Find a relatively empty spot
+                        let bestX = 0, bestY = 0, bestDistance = 0;
+                        
+                        for (let y = 0; y <= height - size; y += stepSize) {
+                            for (let x = 0; x <= width - size; x += stepSize) {
+                                let minDistance = Infinity;
+                                
+                                for (const rect of placedRectangles) {
+                                    const centerX1 = x + size / 2;
+                                    const centerY1 = y + size / 2;
+                                    const centerX2 = rect.x + rect.width / 2;
+                                    const centerY2 = rect.y + rect.height / 2;
+                                    
+                                    const distance = Math.sqrt(
+                                        Math.pow(centerX1 - centerX2, 2) +
+                                        Math.pow(centerY1 - centerY2, 2)
+                                    );
+                                    
+                                    minDistance = Math.min(minDistance, distance);
+                                }
+                                
+                                if (minDistance > bestDistance) {
+                                    bestDistance = minDistance;
+                                    bestX = x;
+                                    bestY = y;
+                                }
+                            }
+                        }
+                        
+                        itemBox.style.left = `${bestX}px`;
+                        itemBox.style.top = `${bestY}px`;
+                        
+                        // Generate a color based on the item name
+                        const hash = item.name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+                        const hue = hash % 360;
+                        itemBox.style.backgroundColor = `hsla(${hue}, 70%, 60%, 0.3)`;
+                        itemBox.style.borderColor = `hsla(${hue}, 70%, 40%, 0.5)`;
+                        
+                        visualizationDiv.appendChild(itemBox);
+                        
+                        placedRectangles.push({
+                            x: bestX,
+                            y: bestY,
+                            width: size,
+                            height: size
+                        });
+                    }
+                }
+            }
+        }
+        
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
