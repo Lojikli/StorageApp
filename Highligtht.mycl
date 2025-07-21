@@ -1,176 +1,179 @@
-// Sample Custom Language File - save as test.mycl or test.custom
-// This demonstrates various syntax elements for highlighting
+// Sample Custom Language File for GitHub - save as test.mycl or test.custom
+// This demonstrates syntax highlighting with the GitHub bookmarklet
 
--- Header comment using alternate style
-/* Multi-line comment
+-- Header comment using alternate style  
+/* Multi-line comment block
    for documentation purposes
-   showing block comment support */
+   testing block comment support */
 
 // Global variable declarations
-GLOBAL STRING userName = "admin"
-GLOBAL INTEGER maxRetries = 3
-CONST DECIMAL PI_VALUE = 3.14159
-VAR BOOLEAN isActive = TRUE
-LOCAL ARRAY userList[10]
+GLOBAL STRING appName = "CustomApp"
+GLOBAL INTEGER maxUsers = 1000
+CONST DECIMAL VERSION = 2.1
+VAR BOOLEAN isRunning = TRUE
+LOCAL ARRAY userData[50]
 
 // Main function definition
-FUNCTION calculateTotal(price, taxRate, discount)
-    VAR DECIMAL subtotal = 0.0
-    VAR DECIMAL finalAmount = 0.0
+FUNCTION calculateDiscount(originalPrice, customerType)
+    VAR DECIMAL discountRate = 0.0
+    VAR DECIMAL finalPrice = 0.0
     
-    // Input validation
-    IF price <= 0 THEN
-        PRINT "Error: Invalid price value"
-        RETURN -1
+    // Determine discount based on customer type
+    IF customerType == "premium" THEN
+        discountRate = 0.15
+    ELSEIF customerType == "standard" THEN
+        discountRate = 0.10
+    ELSE
+        discountRate = 0.05
     ENDIF
     
-    // Calculate subtotal with discount
-    subtotal = price - (price * discount / 100)
+    // Calculate final price
+    finalPrice = originalPrice * (1 - discountRate)
     
-    // Apply tax calculation
-    finalAmount = subtotal + (subtotal * taxRate / 100)
-    
-    RETURN finalAmount
+    RETURN finalPrice
 ENDFUNCTION
 
-// Procedure for user management
-PROC processUserData(userData)
-    DECLARE STRING status = "pending"
-    LOCAL INTEGER counter = 0
+// User management procedure
+PROC manageUserAccounts(userCount)
+    DECLARE STRING status = "active"
+    LOCAL INTEGER index = 0
     
-    // Loop through user data
-    FOR counter = 1 TO 100
-        SET status = validateUser(userData[counter])
+    // Process each user account
+    FOR index = 1 TO userCount
+        SET status = validateAccount(userData[index])
         
         IF status == "valid" THEN
-            CALL addToDatabase(userData[counter])
+            CALL updateDatabase(userData[index])
+            PRINT "User " + index + " processed successfully"
         ELSE
-            WRITE "Invalid user data at position " + counter
+            WRITE "Invalid user data at index " + index
         ENDIF
     ENDFOR
     
-    // While loop example
-    WHILE counter > 0 AND isActive
-        counter = counter - 1
-        EXEC processRecord(counter)
+    // Cleanup loop
+    WHILE index > 0 AND isRunning
+        index = index - 1
+        EXEC cleanupTempData(index)
     ENDWHILE
 ENDPROC
 
-// Advanced control structures
-FUNCTION complexLogic(inputValue)
+// Advanced control flow example
+FUNCTION processBusinessLogic(inputData)
     VAR STRING result = NULL
+    VAR INTEGER errorCode = 0
     
-    // Switch-like structure
-    IF inputValue == 1 THEN
-        result = "Option One"
-    ELSEIF inputValue == 2 THEN
-        result = "Option Two"
-    ELSEIF inputValue >= 3 AND inputValue <= 10 THEN
-        result = "Range Three to Ten"
+    // Switch-like conditional structure
+    IF inputData == "create" THEN
+        result = "Creating new record"
+        errorCode = 0
+    ELSEIF inputData == "update" THEN
+        result = "Updating existing record"
+        errorCode = 0
+    ELSEIF inputData == "delete" THEN
+        result = "Deleting record"
+        errorCode = 0
     ELSE
-        result = "Unknown Option"
+        result = "Unknown operation"
+        errorCode = 404
     ENDIF
     
-    // Try-catch equivalent
-    TRY
-        INVOKE externalService(result)
-        PRINT "Service call successful"
-    CATCH
-        PRINT "Service call failed - using default"
-        result = "default_value"
-    FINALLY
-        PRINT "Cleanup completed"
-    ENDTRY
+    // Error handling simulation
+    IF errorCode != 0 THEN
+        PRINT "Error " + errorCode + ": " + result
+        RETURN NULL
+    ENDIF
     
     RETURN result
 ENDFUNCTION
 
-// String manipulation examples
-SUB stringOperations()
-    VAR STRING firstName = 'John'
-    VAR STRING lastName = "Doe"
+// String and numeric operations
+SUB demonstrateDataTypes()
+    # Different comment style
+    VAR STRING firstName = 'Alice'
+    VAR STRING lastName = "Johnson"
     VAR STRING fullName = firstName + " " + lastName
-    VAR STRING message = `Welcome ${fullName} to the system!`
+    VAR STRING template = `Hello ${fullName}, welcome!`
     
-    // Numeric operations
+    // Numeric examples
     VAR INTEGER count = 42
-    VAR DECIMAL percentage = 85.5
-    VAR INTEGER hexValue = 0xFF
-    VAR DECIMAL scientific = 1.23e-4
+    VAR DECIMAL percentage = 87.5
+    VAR INTEGER hexCode = 0xABCD
+    VAR DECIMAL scientific = 1.5e-3
     
-    // Boolean operations
-    VAR BOOLEAN isValid = TRUE AND (count > 0)
-    VAR BOOLEAN hasAccess = NOT (status == "blocked")
+    // Boolean logic
+    VAR BOOLEAN hasPermission = TRUE AND (count > 0)
+    VAR BOOLEAN isBlocked = NOT (status == "approved")
+    VAR BOOLEAN canProceed = hasPermission OR isBlocked
     
-    // Array operations
-    DIM numbers[5] = {10, 20, 30, 40, 50}
-    numbers[0] = numbers[1] * 2
+    // Array manipulation
+    DIM scores[10] = {95, 87, 92, 78, 88}
+    scores[0] = scores[1] + 5
     
-    PRINT "Processing complete: " + fullName
+    PRINT "Data processing completed for: " + fullName
 ENDSUB
 
-// Main program entry point
+// Main program execution
 BEGIN
-    // Initialize system
-    PRINT "Starting application..."
-    SET isActive = TRUE
+    // System initialization
+    PRINT "Starting application: " + appName
+    SET isRunning = TRUE
     
-    // Call main functions
-    VAR DECIMAL total = calculateTotal(100.0, 8.5, 10.0)
-    VAR STRING userStatus = complexLogic(5)
+    // Execute main functions
+    VAR DECIMAL price = calculateDiscount(100.0, "premium")
+    VAR STRING operation = processBusinessLogic("create")
     
-    CALL processUserData(userList)
-    EXEC stringOperations()
+    CALL manageUserAccounts(userData)
+    EXEC demonstrateDataTypes()
     
-    // Conditional execution
-    IF total > 0 THEN
-        PRINT "Total calculated: $" + total
+    // Final validation
+    IF price > 0 AND operation != NULL THEN
+        PRINT "All operations completed successfully"
+        PRINT "Final price: $" + price
+        PRINT "Operation: " + operation
     ELSE
-        PRINT "Calculation failed"
-        EXIT
+        PRINT "Some operations failed"
     ENDIF
     
-    // Loop with break condition
-    LOOP
-        INPUT "Enter command (quit to exit): " command
-        IF command == "quit" THEN
-            EXIT
+    // Shutdown sequence
+    WHILE isRunning
+        INPUT "Enter 'quit' to exit: " userInput
+        IF userInput == "quit" THEN
+            SET isRunning = FALSE
+        ELSE
+            PRINT "Processing command: " + userInput
         ENDIF
-        PRINT "Processing: " + command
-    ENDLOOP
+    ENDWHILE
     
-    PRINT "Application terminated"
+    PRINT "Application terminated cleanly"
 END
 
-// Cleanup procedures
-PROC cleanup()
-    CLOSE allFiles
-    SAVE configuration
-    DELETE tempData
-    STOP
+// Cleanup and utility functions
+PROC systemCleanup()
+    CLOSE allConnections
+    SAVE configurationData
+    DELETE temporaryFiles
+    WRITE "System cleanup completed"
 ENDPROC
 
-// Mathematical operations
-FUNCTION mathDemo()
-    VAR INTEGER a = 10, b = 3
+// Mathematical operations showcase
+FUNCTION mathOperations()
+    VAR INTEGER x = 15, y = 4
     VAR DECIMAL result = 0.0
     
-    result = a + b        // Addition: 13
-    result = a - b        // Subtraction: 7  
-    result = a * b        // Multiplication: 30
-    result = a / b        // Division: 3.33
-    result = a % b        // Modulo: 1
-    result = a ^ b        // Power: 1000
+    result = x + y    // Addition: 19
+    result = x - y    // Subtraction: 11
+    result = x * y    // Multiplication: 60
+    result = x / y    // Division: 3.75
+    result = x % y    // Modulo: 3
     
-    // Comparison operators
-    IF a > b THEN PRINT "A is greater" ENDIF
-    IF a <= b THEN PRINT "A is less or equal" ENDIF
-    IF a != b THEN PRINT "A is not equal to B" ENDIF
+    // Comparison examples
+    IF x > y THEN PRINT "X is greater than Y" ENDIF
+    IF x <= 20 THEN PRINT "X is 20 or less" ENDIF
+    IF x != y THEN PRINT "X and Y are different" ENDIF
     
-    // Compound assignments
-    a += 5    // a = a + 5
-    b *= 2    // b = b * 2
-    a /= 3    // a = a / 3
+    // Assignment operators
+    x += 10   // x = x + 10
+    y *= 3    // y = y * 3
     
     RETURN result
 ENDFUNCTION
