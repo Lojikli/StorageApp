@@ -1,0 +1,176 @@
+// Sample Custom Language File - save as test.mycl or test.custom
+// This demonstrates various syntax elements for highlighting
+
+-- Header comment using alternate style
+/* Multi-line comment
+   for documentation purposes
+   showing block comment support */
+
+// Global variable declarations
+GLOBAL STRING userName = "admin"
+GLOBAL INTEGER maxRetries = 3
+CONST DECIMAL PI_VALUE = 3.14159
+VAR BOOLEAN isActive = TRUE
+LOCAL ARRAY userList[10]
+
+// Main function definition
+FUNCTION calculateTotal(price, taxRate, discount)
+    VAR DECIMAL subtotal = 0.0
+    VAR DECIMAL finalAmount = 0.0
+    
+    // Input validation
+    IF price <= 0 THEN
+        PRINT "Error: Invalid price value"
+        RETURN -1
+    ENDIF
+    
+    // Calculate subtotal with discount
+    subtotal = price - (price * discount / 100)
+    
+    // Apply tax calculation
+    finalAmount = subtotal + (subtotal * taxRate / 100)
+    
+    RETURN finalAmount
+ENDFUNCTION
+
+// Procedure for user management
+PROC processUserData(userData)
+    DECLARE STRING status = "pending"
+    LOCAL INTEGER counter = 0
+    
+    // Loop through user data
+    FOR counter = 1 TO 100
+        SET status = validateUser(userData[counter])
+        
+        IF status == "valid" THEN
+            CALL addToDatabase(userData[counter])
+        ELSE
+            WRITE "Invalid user data at position " + counter
+        ENDIF
+    ENDFOR
+    
+    // While loop example
+    WHILE counter > 0 AND isActive
+        counter = counter - 1
+        EXEC processRecord(counter)
+    ENDWHILE
+ENDPROC
+
+// Advanced control structures
+FUNCTION complexLogic(inputValue)
+    VAR STRING result = NULL
+    
+    // Switch-like structure
+    IF inputValue == 1 THEN
+        result = "Option One"
+    ELSEIF inputValue == 2 THEN
+        result = "Option Two"
+    ELSEIF inputValue >= 3 AND inputValue <= 10 THEN
+        result = "Range Three to Ten"
+    ELSE
+        result = "Unknown Option"
+    ENDIF
+    
+    // Try-catch equivalent
+    TRY
+        INVOKE externalService(result)
+        PRINT "Service call successful"
+    CATCH
+        PRINT "Service call failed - using default"
+        result = "default_value"
+    FINALLY
+        PRINT "Cleanup completed"
+    ENDTRY
+    
+    RETURN result
+ENDFUNCTION
+
+// String manipulation examples
+SUB stringOperations()
+    VAR STRING firstName = 'John'
+    VAR STRING lastName = "Doe"
+    VAR STRING fullName = firstName + " " + lastName
+    VAR STRING message = `Welcome ${fullName} to the system!`
+    
+    // Numeric operations
+    VAR INTEGER count = 42
+    VAR DECIMAL percentage = 85.5
+    VAR INTEGER hexValue = 0xFF
+    VAR DECIMAL scientific = 1.23e-4
+    
+    // Boolean operations
+    VAR BOOLEAN isValid = TRUE AND (count > 0)
+    VAR BOOLEAN hasAccess = NOT (status == "blocked")
+    
+    // Array operations
+    DIM numbers[5] = {10, 20, 30, 40, 50}
+    numbers[0] = numbers[1] * 2
+    
+    PRINT "Processing complete: " + fullName
+ENDSUB
+
+// Main program entry point
+BEGIN
+    // Initialize system
+    PRINT "Starting application..."
+    SET isActive = TRUE
+    
+    // Call main functions
+    VAR DECIMAL total = calculateTotal(100.0, 8.5, 10.0)
+    VAR STRING userStatus = complexLogic(5)
+    
+    CALL processUserData(userList)
+    EXEC stringOperations()
+    
+    // Conditional execution
+    IF total > 0 THEN
+        PRINT "Total calculated: $" + total
+    ELSE
+        PRINT "Calculation failed"
+        EXIT
+    ENDIF
+    
+    // Loop with break condition
+    LOOP
+        INPUT "Enter command (quit to exit): " command
+        IF command == "quit" THEN
+            EXIT
+        ENDIF
+        PRINT "Processing: " + command
+    ENDLOOP
+    
+    PRINT "Application terminated"
+END
+
+// Cleanup procedures
+PROC cleanup()
+    CLOSE allFiles
+    SAVE configuration
+    DELETE tempData
+    STOP
+ENDPROC
+
+// Mathematical operations
+FUNCTION mathDemo()
+    VAR INTEGER a = 10, b = 3
+    VAR DECIMAL result = 0.0
+    
+    result = a + b        // Addition: 13
+    result = a - b        // Subtraction: 7  
+    result = a * b        // Multiplication: 30
+    result = a / b        // Division: 3.33
+    result = a % b        // Modulo: 1
+    result = a ^ b        // Power: 1000
+    
+    // Comparison operators
+    IF a > b THEN PRINT "A is greater" ENDIF
+    IF a <= b THEN PRINT "A is less or equal" ENDIF
+    IF a != b THEN PRINT "A is not equal to B" ENDIF
+    
+    // Compound assignments
+    a += 5    // a = a + 5
+    b *= 2    // b = b * 2
+    a /= 3    // a = a / 3
+    
+    RETURN result
+ENDFUNCTION
