@@ -1,0 +1,179 @@
+// Sample Custom Language File for GitHub - save as test.mycl or test.custom
+// This demonstrates syntax highlighting with the GitHub bookmarklet
+
+-- Header comment using alternate style  
+/* Multi-line comment block
+   for documentation purposes
+   testing block comment support */
+
+// Global variable declarations
+GLOBAL STRING appName = "CustomApp"
+GLOBAL INTEGER maxUsers = 1000
+CONST DECIMAL VERSION = 2.1
+VAR BOOLEAN isRunning = TRUE
+LOCAL ARRAY userData[50]
+
+// Main function definition
+FUNCTION calculateDiscount(originalPrice, customerType)
+    VAR DECIMAL discountRate = 0.0
+    VAR DECIMAL finalPrice = 0.0
+    
+    // Determine discount based on customer type
+    IF customerType == "premium" THEN
+        discountRate = 0.15
+    ELSEIF customerType == "standard" THEN
+        discountRate = 0.10
+    ELSE
+        discountRate = 0.05
+    ENDIF
+    
+    // Calculate final price
+    finalPrice = originalPrice * (1 - discountRate)
+    
+    RETURN finalPrice
+ENDFUNCTION
+
+// User management procedure
+PROC manageUserAccounts(userCount)
+    DECLARE STRING status = "active"
+    LOCAL INTEGER index = 0
+    
+    // Process each user account
+    FOR index = 1 TO userCount
+        SET status = validateAccount(userData[index])
+        
+        IF status == "valid" THEN
+            CALL updateDatabase(userData[index])
+            PRINT "User " + index + " processed successfully"
+        ELSE
+            WRITE "Invalid user data at index " + index
+        ENDIF
+    ENDFOR
+    
+    // Cleanup loop
+    WHILE index > 0 AND isRunning
+        index = index - 1
+        EXEC cleanupTempData(index)
+    ENDWHILE
+ENDPROC
+
+// Advanced control flow example
+FUNCTION processBusinessLogic(inputData)
+    VAR STRING result = NULL
+    VAR INTEGER errorCode = 0
+    
+    // Switch-like conditional structure
+    IF inputData == "create" THEN
+        result = "Creating new record"
+        errorCode = 0
+    ELSEIF inputData == "update" THEN
+        result = "Updating existing record"
+        errorCode = 0
+    ELSEIF inputData == "delete" THEN
+        result = "Deleting record"
+        errorCode = 0
+    ELSE
+        result = "Unknown operation"
+        errorCode = 404
+    ENDIF
+    
+    // Error handling simulation
+    IF errorCode != 0 THEN
+        PRINT "Error " + errorCode + ": " + result
+        RETURN NULL
+    ENDIF
+    
+    RETURN result
+ENDFUNCTION
+
+// String and numeric operations
+SUB demonstrateDataTypes()
+    # Different comment style
+    VAR STRING firstName = 'Alice'
+    VAR STRING lastName = "Johnson"
+    VAR STRING fullName = firstName + " " + lastName
+    VAR STRING template = `Hello ${fullName}, welcome!`
+    
+    // Numeric examples
+    VAR INTEGER count = 42
+    VAR DECIMAL percentage = 87.5
+    VAR INTEGER hexCode = 0xABCD
+    VAR DECIMAL scientific = 1.5e-3
+    
+    // Boolean logic
+    VAR BOOLEAN hasPermission = TRUE AND (count > 0)
+    VAR BOOLEAN isBlocked = NOT (status == "approved")
+    VAR BOOLEAN canProceed = hasPermission OR isBlocked
+    
+    // Array manipulation
+    DIM scores[10] = {95, 87, 92, 78, 88}
+    scores[0] = scores[1] + 5
+    
+    PRINT "Data processing completed for: " + fullName
+ENDSUB
+
+// Main program execution
+BEGIN
+    // System initialization
+    PRINT "Starting application: " + appName
+    SET isRunning = TRUE
+    
+    // Execute main functions
+    VAR DECIMAL price = calculateDiscount(100.0, "premium")
+    VAR STRING operation = processBusinessLogic("create")
+    
+    CALL manageUserAccounts(userData)
+    EXEC demonstrateDataTypes()
+    
+    // Final validation
+    IF price > 0 AND operation != NULL THEN
+        PRINT "All operations completed successfully"
+        PRINT "Final price: $" + price
+        PRINT "Operation: " + operation
+    ELSE
+        PRINT "Some operations failed"
+    ENDIF
+    
+    // Shutdown sequence
+    WHILE isRunning
+        INPUT "Enter 'quit' to exit: " userInput
+        IF userInput == "quit" THEN
+            SET isRunning = FALSE
+        ELSE
+            PRINT "Processing command: " + userInput
+        ENDIF
+    ENDWHILE
+    
+    PRINT "Application terminated cleanly"
+END
+
+// Cleanup and utility functions
+PROC systemCleanup()
+    CLOSE allConnections
+    SAVE configurationData
+    DELETE temporaryFiles
+    WRITE "System cleanup completed"
+ENDPROC
+
+// Mathematical operations showcase
+FUNCTION mathOperations()
+    VAR INTEGER x = 15, y = 4
+    VAR DECIMAL result = 0.0
+    
+    result = x + y    // Addition: 19
+    result = x - y    // Subtraction: 11
+    result = x * y    // Multiplication: 60
+    result = x / y    // Division: 3.75
+    result = x % y    // Modulo: 3
+    
+    // Comparison examples
+    IF x > y THEN PRINT "X is greater than Y" ENDIF
+    IF x <= 20 THEN PRINT "X is 20 or less" ENDIF
+    IF x != y THEN PRINT "X and Y are different" ENDIF
+    
+    // Assignment operators
+    x += 10   // x = x + 10
+    y *= 3    // y = y * 3
+    
+    RETURN result
+ENDFUNCTION
